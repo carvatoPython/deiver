@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador — Flota Turística 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --asfalto:#12182B;
+    --asfalto2:#1A2238;
+    --panel:#1E2740;
+    --linea:#313C61;
+    --texto:#F2F5FC;
+    --texto-mute:#A7B0CC;
+    --sol:#F2B705;
+    --teal:#2EC4B6;
+    --coral:#E85D4E;
+    --violeta:#8B7CF6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--asfalto); color:var(--texto);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.5; font-size:15px;
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.01em; }
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 20px 80px;}
+
+  .hero{position:relative; display:flex; justify-content:space-between; align-items:flex-start; gap:40px; padding:34px 30px; border-radius:18px; background:linear-gradient(135deg,var(--asfalto2),var(--asfalto)); border:1px solid var(--linea); overflow:hidden; margin-bottom:100px;}
+  .hero::after{ content:""; position:absolute; left:0; right:0; bottom:22px; height:3px;
+    background:repeating-linear-gradient(90deg,var(--sol) 0 26px, transparent 26px 46px); opacity:.55; }
+  .hero .eyebrow{color:var(--sol); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:600;}
+  .hero h1{font-size:clamp(24px,4vw,34px); margin:6px 0 8px; text-align:center; margin: 20px 0;}
+  .hero p{color:var(--texto-mute); max-width:680px; margin: 30px 0; font-size:14.5px;}
+  .hero-texto{flex:1;}
+  .hero-imagen{ width:380px; display:flex; justify-content:center; margin: 80px 0; align-items:flex-start;}
+  .hero-imagen img{ width:100%; border-radius:12px;  }
+
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px;}
+  .stat{background:var(--panel); border:1px solid var(--linea); border-radius:14px; padding:16px 18px;}
+  .stat .k{font-size:11.5px; color:var(--texto-mute); text-transform:uppercase; letter-spacing:.08em;}
+  .stat .v{font-size:22px; font-weight:700; margin-top:4px; font-family:'Space Grotesk',sans-serif;}
+  .stat .v.pos{color:var(--teal);} .stat .v.warn{color:var(--sol);}
+
+  .grid2{display:grid; grid-template-columns:1.1fr 1.4fr; gap:18px; margin-bottom:18px;}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+  .panel{background:var(--panel); border:1px solid var(--linea); border-radius:16px; padding:22px;}
+  .panel h2{font-size:17px; margin:0 0 4px;}
+  .panel .sub{color:var(--texto-mute); font-size:13px; margin:0 0 16px;}
+
+  .ctrl{margin-bottom:16px;}
+  .ctrl label{display:flex; justify-content:space-between; font-size:13px; color:var(--texto-mute); margin-bottom:5px;}
+  .ctrl label b{color:var(--texto); font-family:'Space Grotesk',sans-serif;}
+  input[type=range] {-webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 4px; background: var(--linea); outline: none;}
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:17px; height:17px; border-radius:50%; background:var(--sol); cursor:pointer; border:3px solid var(--asfalto); }
+  .reset-btn{ margin-top:30px; background:transparent; border:1px solid var(--linea); color:var(--texto-mute); padding:8px 14px; border-radius:9px; font-size:12.5px; cursor:pointer; }
+  .reset-btn:hover{border-color:var(--sol); color:var(--sol);}
+  .fija{display:flex; justify-content:space-between; font-size:12.5px; color:var(--texto-mute); padding:7px 0; border-bottom:1px dashed var(--linea);}
+  .fija b{color:var(--texto);}
+
+  .meses{display:grid; grid-template-columns:repeat(3,4fr); gap:12px;}
+  .mes-card{ border-radius:10px; padding:22px 16px; text-align:center; font-size:11px; border:1px solid var(--linea); background:var(--asfalto2); cursor:pointer; transition:transform .12s ease; }
+  .mes-card:hover{transform:translateY(-2px);}
+  .mes-card .nombre{font-weight:700; font-size:11.5px; margin-bottom:2px;}
+  .mes-card .tag{font-size:9px; color:var(--texto-mute); min-height:22px; display:block;}
+  .mes-card .peso{font-size:9.5px; color:var(--texto-mute); margin-top:4px; display:block; font-weight:700;}
+  .mes-card.alta{border-color:var(--sol); background:rgba(242,183,5,.10);}
+  .mes-card.media{border-color:var(--teal); background:rgba(46,196,182,.08);}
+  .mes-card.baja{border-color:var(--coral); background:rgba(232,93,78,.08);}
+  .mes-card.seleccionado{outline:2px solid var(--texto); outline-offset:2px;}
+  .leyenda{display:flex; gap:16px; margin-top:20px; font-size:12px; color:var(--texto-mute); flex-wrap:wrap;}
+  .dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:10px;}
+
+  .chart-box{position:relative; height:300px;}
+  .chart-box.short{height:230px;}
+  .full{grid-column:1/-1;}
+
+  .toggle-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .toggle-btn{ background:var(--asfalto2); border:1px solid var(--linea); color:var(--texto-mute);
+    padding:8px 13px; border-radius:9px; font-size:12.5px; cursor:pointer; font-weight:600; }
+  .toggle-btn.active{ border-color:var(--sol); color:var(--sol); background:rgba(242,183,5,.10); }
+  .desglose{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px;}
+  .desglose .item{text-align:center; padding:10px 6px; border-radius:10px; background:var(--asfalto2); border:1px solid var(--linea);}
+  .desglose .item .n{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:16px;}
+  .desglose .item .l{font-size:10.5px; color:var(--texto-mute); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+
+  .motivo-box{background:var(--asfalto2); border:1px solid var(--linea); border-radius:12px; padding:16px; margin-top:14px; font-size:12.5px; color:var(--texto-mute); line-height:1.7;}
+  .motivo-box b{color:var(--texto);}
+  .motivo-chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .chip{font-size:10.5px; padding:4px 10px; border-radius:20px; border:1px solid var(--linea); color:var(--texto-mute);}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th,td{padding:8px 6px; text-align:right; border-bottom:1px solid var(--linea);}
+  th:first-child,td:first-child{text-align:left; color:var(--texto-mute);}
+  th{color:var(--texto-mute); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
+
+  .note{font-size:12px; color:var(--texto-mute); margin-top:10px; line-height:1.6;}
+  .note b{color:var(--texto);}
+  footer{color:var(--texto-mute); font-size:12px; text-align:center; margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-texto">
+        <div class="eyebrow">SIMULADO EN BASE A ESTIMACIONES ACTUALES, PROYECTADAS EN FECHAS DEL AÑO ENTRANTE (2027)</div>
+        <h1>Plan de Inversión <br> en el transporte turístico</h1>
+        <p>
+            El presente plan de negocios tiene como finalidad evaluar la viabilidad financiera de invertir en la adquisición de dos buses destinados al transporte turístico nacional.
+            La inversión inicial será de $180.000.000 COP, permitiendo adquirir completamente un primer vehículo y financiar parcialmente un segundo.
+            El modelo de negocio está diseñado bajo una estrategia de crecimiento sostenible, donde la utilidad generada por ambos vehículos permite cubrir la deuda del segundo bus y generar flujo de caja positivo desde el primer mes de operación.
+            El proyecto contempla una simulación financiera basada en la estacionalidad real del turismo colombiano: temporadas altas, medias y bajas, calculadas a partir del calendario oficial de festivos, puentes y Semana Santa de 2027.
+        </p>
+    </div>
+    <div class="hero-imagen">
+        <img src="turismo.jpg" alt="Imagen de buses turísticos">
+    </div>
+  </section>
+
+  <div class="stats" id="statStrip"></div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>Controles del modelo</h2>
+      <p class="sub">La utilidad neta mensual es el dato base (no se recalcula desde el ingreso). El conductor (20%) es fijo, como lo describiste.</p>
+
+      <div class="ctrl"><label>Capital invertido <b id="lblCapital"></b></label>
+        <input type="range" id="capital" min="180000000" max="300000000" step="5000000" value="180000000"></div>
+
+      <div class="ctrl"><label>Saldo financiado del bus 2 <b id="lblDeuda"></b></label>
+        <input type="range" id="deuda" min="0" max="120000000" step="5000000" value="60000000"></div>
+
+      <div class="ctrl"><label>Cuota mensual bus 2 <b id="lblCuota"></b></label>
+        <input type="range" id="cuota" min="2500000" max="5000000" step="100000" value="3500000"></div>
+
+      <div class="ctrl"><label>Utilidad neta promedio mensual por bus <b id="lblUtilProm"></b></label>
+        <input type="range" id="utilidadProm" min="5000000" max="9000000" step="100000" value="7000000"></div>
+
+      <div class="ctrl"><label>Combustible en meses de temporada alta <b id="lblCombAlta"></b></label>
+        <input type="range" id="combAlta" min="20" max="28" step="1" value="24"></div>
+
+      <div class="ctrl"><label>Combustible en meses de temporada baja <b id="lblCombBaja"></b></label>
+        <input type="range" id="combBaja" min="26" max="32" step="1" value="29"></div>
+
+      <div class="ctrl"><label>Otros costos operativos (peajes, parqueaderos, mantenimiento) <b id="lblOtros"></b></label>
+        <input type="range" id="otros" min="5" max="12" step="1" value="8"></div>
+
+      <div class="fija"><span>Conductor (fijo, no varía)</span><b>20%</b></div>
+      <div class="fija"><span>Promedio anual objetivo por bus</span><b>$84.0M</b></div>
+
+      <button class="reset-btn" onclick="resetDefaults()">↺ Restablecer valores del plan</button>
+    </div>
+
+    <div class="panel">
+      <h2>Calendario turístico Colombia 2027</h2>
+      <p class="sub">Festivos, puentes y Semana Santa oficiales de 2027. Haz clic en un mes para ver su detalle abajo.</p>
+      <div class="meses" id="calStrip"></div>
+      <div class="leyenda">
+        <span><span class="dot" style="background:var(--sol)"></span>Temporada alta</span>
+        <span><span class="dot" style="background:var(--teal)"></span>Temporada media</span>
+        <span><span class="dot" style="background:var(--coral)"></span>Temporada baja</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel full" style="margin-bottom:30px; margin-top:30px;">
+    <h2>Utilidad neta mensual por bus, según el calendario</h2>
+    <p class="sub">Una barra por mes (no por tipo de viaje). El color indica el nivel de temporada de ese mes.</p>
+    <div class="chart-box"><canvas id="chartMensual"></canvas></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>Recuperación de la inversión</h2>
+      <p class="sub">Capital invertido vs. utilidad acumulada de la flota, 24 meses.</p>
+      <div class="chart-box"><canvas id="chartRecuperacion"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Bus 2: utilidad real mes a mes</h2>
+      <p class="sub" id="subBus2">Ya con la cuota descontada.</p>
+      <div class="chart-box"><canvas id="chartBus2"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel full" style="margin-bottom:30px; margin-top:30px;">
+    <h2 id="tituloMesSel">Detalle del mes seleccionado</h2>
+    <p class="sub">Todo el dashboard gira alrededor del mes que elijas en el calendario de arriba.</p>
+
+    <div class="grid2" style="grid-template-columns:1fr 1fr; margin-bottom:0;">
+      <div>
+        <h3 style="font-size:13.5px; margin:0 0 8px; color:var(--texto-mute);">Reparto económico del mes</h3>
+        <div class="chart-box short"><canvas id="chartPieEconomico"></canvas></div>
+        <div class="desglose" id="desgloseEconomico"></div>
+      </div>
+      <div>
+        <h3 style="font-size:13.5px; margin:0 0 8px; color:var(--texto-mute);">Composición de la demanda del mes</h3>
+        <div class="chart-box short"><canvas id="chartPieComposicion"></canvas></div>
+        <div class="desglose" id="desgloseComposicion"></div>
+      </div>
+    </div>
+
+    <div class="motivo-box" id="motivoBox"></div>
+  </div>
+
+  <div class="panel full" style="margin-bottom:18px;">
+    <h2>Detalle mes a mes (24 meses)</h2>
+    <p class="sub">Utilidad por bus según el calendario, cuota del bus 2 y caja acumulada frente al capital invertido.</p>
+    <div style="overflow-x:auto;"><table id="tablaDetalle"></table></div>
+    <p class="note" id="notaSupuestos"></p>
+  </div>
+
+  <footer>Modelo estimado con fines de planeación — ajusta los controles según datos reales de operación a medida que arranque la flota.</footer>
+</div>
+
+<script>
+/* =========================================================================
+   CALENDARIO TURÍSTICO COLOMBIA 2027 — fuente del modelo
+   Festivos oficiales verificados para 2027 (Ley Emiliani incluida):
+   Ene 1 (Año Nuevo), Ene 11 (Reyes Magos-puente), Mar 21-28 (Semana Santa
+   completa: Domingo de Ramos, San José 22-puente, Jueves y Viernes Santo,
+   Domingo de Resurrección), May 1 (Trabajo), May 10 (Ascensión-puente),
+   May 31 (Corpus Christi-puente), Jun 7 (Sagrado Corazón-puente),
+   Jul 5 (San Pedro y Pablo-puente), Jul 12 (Virgen de Chiquinquirá-puente),
+   Jul 20 (Independencia), Ago 7 (Batalla de Boyacá), Ago 16 (Asunción-puente),
+   Oct 11-15 (semana de receso estudiantil, no festivo), Oct 18 (Día de la
+   Raza-puente), Nov 1 (Todos los Santos-puente), Nov 15 (Independencia de
+   Cartagena-puente), Dic 8 (Inmaculada Concepción), Dic 25 (Navidad).
+   Vacaciones escolares: mediados de junio a mediados de julio, y de
+   diciembre a fines de enero.
+   Cada mes tiene un "peso" (factor de estacionalidad) relativo a 1.0 =
+   promedio. La suma de los 12 pesos = 12, así que el promedio anual
+   siempre da exactamente 12 × utilidadProm, sin importar el valor del
+   slider — el calendario reparte esa utilidad, nunca la inventa.
+========================================================================= */
+const CALENDARIO = [
+  { corto:"Ene", nombre:"Enero", nivel:"alta", peso:1.25,
+    tag:"Cola de vacaciones + Reyes Magos (11)",
+    motivo:"Enero arranca con la cola de las vacaciones de diciembre-enero (las familias siguen de viaje hasta mediados de mes) y suma el puente de Reyes Magos el 11. La segunda quincena ya se enfría.",
+    comp2:[{l:"Cola de vacaciones dic-ene",p:55},{l:"Puente Reyes Magos",p:20},{l:"Contratos normales",p:25}] },
+  { corto:"Feb", nombre:"Febrero", nivel:"baja", peso:0.68,
+    tag:"Sin festivos — mes más flojo junto a septiembre",
+    motivo:"Febrero de 2027 no tiene ningún día festivo ni puente. Es, junto con septiembre, el mes con menor demanda turística del año en Colombia.",
+    comp2:[{l:"Tiempo muerto",p:80},{l:"Contratos ocasionales",p:20}] },
+  { corto:"Mar", nombre:"Marzo", nivel:"alta", peso:1.15,
+    tag:"Semana Santa completa (21–28)",
+    motivo:"Semana Santa 2027 cae completa dentro de marzo (Domingo de Ramos 21, San José 22 como puente, Jueves y Viernes Santo 25-26, Resurrección 28): es una de las semanas de mayor movilidad turística del país.",
+    comp2:[{l:"Semana Santa",p:75},{l:"Contratos normales",p:25}] },
+  { corto:"Abr", nombre:"Abril", nivel:"baja", peso:0.78,
+    tag:"Sin festivos — lull post Semana Santa",
+    motivo:"Abril no trae festivos ni puentes. Después del pico de Semana Santa, la demanda cae de forma típica en el sector.",
+    comp2:[{l:"Tiempo muerto",p:60},{l:"Contratos normales",p:40}] },
+  { corto:"May", nombre:"Mayo", nivel:"media", peso:0.92,
+    tag:"2 puentes: Ascensión (10) y Corpus Christi (31)",
+    motivo:"Mayo tiene dos puentes seguidos (Ascensión el 10 y Corpus Christi el 31), que generan salidas cortas pero no alcanzan el nivel de una vacación larga.",
+    comp2:[{l:"Puentes (Ascensión y Corpus)",p:45},{l:"Contratos normales",p:55}] },
+  { corto:"Jun", nombre:"Junio", nivel:"media", peso:1.00,
+    tag:"Puente Sagrado Corazón (7) + arranque de vacaciones",
+    motivo:"El puente del Sagrado Corazón (7) coincide con el arranque de las vacaciones escolares de mitad de año, que empiezan hacia mediados de junio.",
+    comp2:[{l:"Arranque vacaciones",p:35},{l:"Puente Sagrado Corazón",p:15},{l:"Contratos normales",p:50}] },
+  { corto:"Jul", nombre:"Julio", nivel:"alta", peso:1.35,
+    tag:"Vacaciones + 2 puentes + Independencia (20)",
+    motivo:"Julio concentra las vacaciones escolares de mitad de año en pleno, dos puentes (San Pedro y Pablo el 5, Virgen de Chiquinquirá el 12) y el Día de la Independencia el 20. Es el segundo mes más fuerte del año.",
+    comp2:[{l:"Vacaciones escolares",p:60},{l:"Puentes",p:25},{l:"Contratos normales",p:15}] },
+  { corto:"Ago", nombre:"Agosto", nivel:"baja", peso:0.72,
+    tag:"Puente Asunción (16), resto flojo",
+    motivo:"Agosto trae un solo puente (Asunción de la Virgen, 16). Fuera de esa semana, es un mes de baja demanda al terminar las vacaciones de mitad de año.",
+    comp2:[{l:"Tiempo muerto",p:55},{l:"Puente Asunción",p:20},{l:"Contratos normales",p:25}] },
+  { corto:"Sep", nombre:"Septiembre", nivel:"baja", peso:0.65,
+    tag:"Sin festivos — el mes más flojo del año",
+    motivo:"Septiembre no tiene ningún festivo en 2027. Es el mes de menor demanda del calendario, junto a febrero.",
+    comp2:[{l:"Tiempo muerto",p:85},{l:"Contratos ocasionales",p:15}] },
+  { corto:"Oct", nombre:"Octubre", nivel:"media", peso:0.95,
+    tag:"Receso escolar (11–15) + puente Día de la Raza (18)",
+    motivo:"La semana de receso estudiantil (11 al 15, no festiva pero de alta movilidad familiar) se combina con el puente del Día de la Raza el 18.",
+    comp2:[{l:"Receso escolar",p:40},{l:"Puente Día de la Raza",p:25},{l:"Contratos normales",p:35}] },
+  { corto:"Nov", nombre:"Noviembre", nivel:"alta", peso:1.10,
+    tag:"2 puentes: Todos los Santos (1) e Independencia de Cartagena (15)",
+    motivo:"Noviembre trae dos puentes en el mes (Todos los Santos el 1 e Independencia de Cartagena el 15), lo que sostiene una demanda por encima del promedio, aunque menor a la de Semana Santa o diciembre.",
+    comp2:[{l:"Puentes",p:55},{l:"Contratos normales",p:45}] },
+  { corto:"Dic", nombre:"Diciembre", nivel:"alta", peso:1.45,
+    tag:"Velitas, Inmaculada (8), Navidad y arranque de vacaciones",
+    motivo:"Diciembre combina el Día de las Velitas (7, no festivo pero de altísima movilidad), la Inmaculada Concepción (8), la Navidad (25) y el arranque de las vacaciones largas de fin de año. Es el mes más fuerte del año.",
+    comp2:[{l:"Velitas y Navidad",p:50},{l:"Arranque vacaciones",p:30},{l:"Contratos normales",p:20}] },
+];
+const SUMA_PESOS = CALENDARIO.reduce((a,c)=>a+c.peso,0); // = 12 → promedio anual exacto
+
+const CONDUCTOR = 20; // % fijo
+
+let state = { capital:180000000, deuda:60000000, cuota:3500000, utilidadProm:7000000, combAlta:24, combBaja:29, otros:8 };
+let mesSeleccionado = 6; // Julio por defecto
+
+const fmt = n => "$" + Math.round(n).toLocaleString("es-CO");
+const fmtM = n => "$" + (n/1000000).toLocaleString("es-CO",{maximumFractionDigits:2}) + "M";
+
+// Combustible % efectivo de un mes según su nivel de temporada
+function combustibleDelMes(c){
+  if(c.nivel==="alta") return state.combAlta;
+  if(c.nivel==="baja") return state.combBaja;
+  return (state.combAlta + state.combBaja)/2; // media = promedio
+}
+
+// La utilidad neta mensual por bus SALE del calendario. Nunca se recalcula
+// desde el ingreso — es el dato base, tal como lo pediste.
+function utilidadMesPorBus(idxCal){
+  const c = CALENDARIO[idxCal];
+  return (c.peso / SUMA_PESOS) * 12 * state.utilidadProm;
+}
+
+// El ingreso bruto se DERIVA de la utilidad (nunca al revés), solo para
+// alimentar el donut económico.
+function ingresoBrutoDelMes(idxCal){
+  const c = CALENDARIO[idxCal];
+  const utilidad = utilidadMesPorBus(idxCal);
+  const comb = combustibleDelMes(c);
+  const otros = state.otros;
+  const fracUtilidad = 1 - (comb + CONDUCTOR + otros)/100;
+  const ingreso = utilidad / fracUtilidad;
+  return { ingreso, comb, conductor:CONDUCTOR, otros, utilidad };
+}
+
+// TIR (Tasa Interna de Retorno): la tasa mensual que hace que el valor
+// presente neto del flujo de caja (capital invertido + utilidades mes a
+// mes) sea cero. A diferencia del ROI simple, sí distingue la VELOCIDAD:
+// un peso que llega en el mes 2 pesa más que uno que llega en el mes 20.
+function calcularTIR(flujos){
+  const npv = r => flujos.reduce((acc,cf,t)=> acc + cf/Math.pow(1+r,t), 0);
+  let lo=-0.99, hi=5.0, fLo=npv(lo);
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2, fMid=npv(mid);
+    if((fLo<0)===(fMid<0)){ lo=mid; fLo=fMid; } else { hi=mid; }
+  }
+  return (lo+hi)/2; // tasa mensual, ej. 0.0346 = 3.46%
+}
+
+function calcular(){
+  let deudaRestante = state.deuda;
+  const meses = [];
+  for(let i=0;i<24;i++){
+    const ci = i%12;
+    const c = CALENDARIO[ci];
+    const u1 = utilidadMesPorBus(ci);
+    let cuotaPagada = 0;
+    if(deudaRestante>0){ cuotaPagada = Math.min(state.cuota, deudaRestante); deudaRestante -= cuotaPagada; }
+    const u2 = u1 - cuotaPagada;
+    meses.push({idx:i, mes:c.corto + (i>=12?" (año 2)":""), nivel:c.nivel, u1, u2, cuotaPagada, deudaRestante});
+  }
+  return meses;
+}
+
+function actualizarTodo(){
+  document.getElementById("lblCapital").textContent = fmt(state.capital);
+  document.getElementById("lblDeuda").textContent = fmt(state.deuda);
+  document.getElementById("lblCuota").textContent = fmt(state.cuota);
+  document.getElementById("lblUtilProm").textContent = fmt(state.utilidadProm) + "/mes";
+  document.getElementById("lblCombAlta").textContent = state.combAlta + "%";
+  document.getElementById("lblCombBaja").textContent = state.combBaja + "%";
+  document.getElementById("lblOtros").textContent = state.otros + "%";
+
+  const meses = calcular();
+  let acumulado = 0, mesPago = null;
+  const acumSerie = meses.map(m=>{ acumulado += (m.u1+m.u2); if(mesPago===null && acumulado>=state.capital) mesPago=m.idx+1; return acumulado; });
+  const totalFlota = meses.map(m=>m.u1+m.u2);
+  const anual12 = totalFlota.slice(0,12).reduce((a,b)=>a+b,0);
+  const total24 = acumSerie[23];
+  const roi24 = ((total24-state.capital)/state.capital*100);
+  const mesLibreIdx = meses.findIndex(m=>m.deudaRestante<=0);
+
+  const flujosCaja = [-state.capital, ...totalFlota]; // mes 0 = inversión, meses 1-24 = utilidad flota
+  const tirMensual = calcularTIR(flujosCaja);
+
+  document.getElementById("statStrip").innerHTML = [
+    {k:"Capital invertido", v:fmt(state.capital)},
+    {k:"Utilidad flota año 1", v:fmt(anual12), cls:"pos"},
+    {k:"Ganancia neta (24 meses)", v:fmt(total24-state.capital), cls: total24>=state.capital?"pos":"warn"},
+    {k:"ROI a 24 meses", v:roi24.toFixed(0)+"%", cls:"pos"},
+    {k:"TIR mensual", v:(tirMensual*100).toFixed(2)+"%", cls:"pos"},
+    {k:"Mes de recuperación", v:mesPago? "Mes "+mesPago : "> 24 meses", cls:"warn"},
+    {k:"Bus 2 libre de deuda", v: mesLibreIdx>=0? "Mes "+(mesLibreIdx+1) : "> 24 meses"},
+  ].map(s=>`<div class="stat"><div class="k">${s.k}</div><div class="v ${s.cls||""}">${s.v}</div></div>`).join("");
+
+  dibujarMensual();
+  dibujarRecuperacion(meses, acumSerie, mesPago);
+  dibujarBus2(meses, mesLibreIdx);
+  dibujarDetalleMes();
+  dibujarTabla(meses, acumSerie);
+}
+
+function pintarCalendario(){
+  document.getElementById("calStrip").innerHTML = CALENDARIO.map((c,i)=>
+    `<div class="mes-card ${c.nivel} ${i===mesSeleccionado?'seleccionado':''}" data-idx="${i}">
+       <div class="nombre">${c.corto}</div><span class="tag">${c.tag}</span>
+       <span class="peso">${c.peso.toFixed(2)}×</span>
+     </div>`
+  ).join("");
+  document.querySelectorAll(".mes-card").forEach(el=>{
+    el.addEventListener("click", ()=>{ mesSeleccionado = Number(el.dataset.idx); pintarCalendario(); dibujarDetalleMes(); });
+  });
+}
+
+let cMensual, cRecup, cBus2, cPieEco, cPieComp;
+const mute="#A7B0CC";
+const COLOR_NIVEL = {alta:"#F2B705", media:"#2EC4B6", baja:"#E85D4E"};
+
+function baseOpts(extra={}){
+  return Object.assign({ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:mute,font:{size:12},usePointStyle:true}}, tooltip:{titleFont:{size:13}, bodyFont:{size:12.5}}},
+    scales:{ x:{ticks:{color:mute,font:{size:11}}, grid:{display:false}},
+             y:{ticks:{color:mute,font:{size:11},callback:v=>(v/1000000)+"M"}, grid:{color:"rgba(255,255,255,.06)"}} }
+  }, extra);
+}
+
+function dibujarMensual(){
+  const ctx = document.getElementById("chartMensual");
+  const data = { labels: CALENDARIO.map(c=>c.corto),
+    datasets:[{ label:"Utilidad neta / bus",
+      data: CALENDARIO.map((c,i)=>utilidadMesPorBus(i)),
+      backgroundColor: CALENDARIO.map(c=>COLOR_NIVEL[c.nivel]), borderRadius:6 }] };
+  if(cMensual){cMensual.data=data; cMensual.update(); return;}
+  cMensual = new Chart(ctx,{type:"bar", data, options: baseOpts({plugins:{legend:{display:false}}})});
+}
+
+function dibujarRecuperacion(meses, acumSerie, mesPago){
+  const ctx = document.getElementById("chartRecuperacion");
+  const data = { labels: meses.map(m=>m.mes),
+    datasets:[
+      {label:"Capital invertido", data: meses.map(()=>state.capital), borderColor:"#E85D4E", borderDash:[6,4], pointRadius:0, borderWidth:2},
+      {label:"Utilidad acumulada", data: acumSerie, borderColor:"#F2B705", backgroundColor:"rgba(242,183,5,.14)", fill:true, tension:.3, pointRadius:0, borderWidth:2.5},
+    ]};
+  if(cRecup){cRecup.data=data; cRecup.update(); return;}
+  cRecup = new Chart(ctx,{type:"line", data, options: baseOpts()});
+}
+
+function dibujarBus2(meses, mesLibreIdx){
+  const ctx = document.getElementById("chartBus2");
+  document.getElementById("subBus2").textContent = mesLibreIdx>=0
+    ? `Ya con la cuota descontada — libre de deuda desde el mes ${mesLibreIdx+1}.`
+    : `Ya con la cuota descontada — sigue pagando deuda al mes 24.`;
+  const data = { labels: meses.map(m=>m.mes),
+    datasets:[{
+      label:"Utilidad real bus 2", data: meses.map(m=>m.u2),
+      borderWidth:2.5, pointRadius:0, tension:.25, fill:true,
+      segment:{
+        borderColor: c => (c.p0DataIndex < mesLibreIdx || mesLibreIdx<0) ? "#8B7CF6" : "#2EC4B6",
+        backgroundColor: c => (c.p0DataIndex < mesLibreIdx || mesLibreIdx<0) ? "rgba(139,124,246,.15)" : "rgba(46,196,182,.15)",
+      }
+    }]};
+  if(cBus2){cBus2.data=data; cBus2.update(); return;}
+  cBus2 = new Chart(ctx,{type:"line", data, options: baseOpts({plugins:{legend:{display:false}}})});
+}
+
+function dibujarDetalleMes(){
+  const c = CALENDARIO[mesSeleccionado];
+  document.getElementById("tituloMesSel").textContent = `Detalle de ${c.nombre}`;
+
+  // --- Donut económico: ingreso bruto → combustible → conductor → otros → utilidad neta
+  const v = ingresoBrutoDelMes(mesSeleccionado);
+  const otrosCosto = v.otros;
+  const utilidadPct = 100 - v.comb - v.conductor - otrosCosto;
+  const ctxEco = document.getElementById("chartPieEconomico");
+  const dataEco = { labels:[`Combustible (${v.comb}%)`, `Conductor (${v.conductor}%)`, `Otros costos (${otrosCosto}%)`, `Utilidad neta (${utilidadPct.toFixed(0)}%)`],
+    datasets:[{data:[v.comb, v.conductor, otrosCosto, utilidadPct], backgroundColor:["#E85D4E","#8B7CF6","#3D4A73","#F2B705"], borderColor:"#1E2740", borderWidth:3}] };
+  if(cPieEco){ cPieEco.data=dataEco; cPieEco.update(); } else {
+    cPieEco = new Chart(ctxEco,{type:"doughnut", data:dataEco, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:"bottom",labels:{color:mute,font:{size:10.5},usePointStyle:true}}}}});
+  }
+  document.getElementById("desgloseEconomico").innerHTML = `
+    <div class="item" style="grid-column:1/-1;"><div class="n">${fmtM(v.ingreso)}</div><div class="l">Ingreso bruto requerido</div></div>
+    <div class="item"><div class="n" style="color:#E85D4E">-${fmtM(v.ingreso*v.comb/100)}</div><div class="l">Combustible</div></div>
+    <div class="item"><div class="n" style="color:#8B7CF6">-${fmtM(v.ingreso*v.conductor/100)}</div><div class="l">Conductor</div></div>
+    <div class="item"><div class="n" style="color:#A7B0CC">-${fmtM(v.ingreso*otrosCosto/100)}</div><div class="l">Otros costos</div></div>
+    <div class="item" style="grid-column:1/-1;"><div class="n" style="color:#F2B705">${fmtM(v.utilidad)}</div><div class="l">= Utilidad neta</div></div>`;
+
+  // --- Donut de composición: por qué ese mes genera esa demanda
+  const ctxComp = document.getElementById("chartPieComposicion");
+  const dataComp = { labels: c.comp2.map(x=>`${x.l} (${x.p}%)`),
+    datasets:[{data:c.comp2.map(x=>x.p), backgroundColor:["#8B7CF6","#2EC4B6","#F2B705","#E85D4E"], borderColor:"#1E2740", borderWidth:3}] };
+  if(cPieComp){ cPieComp.data=dataComp; cPieComp.update(); } else {
+    cPieComp = new Chart(ctxComp,{type:"doughnut", data:dataComp, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:"bottom",labels:{color:mute,font:{size:10.5},usePointStyle:true}}}}});
+  }
+  document.getElementById("desgloseComposicion").innerHTML = c.comp2.map(x=>
+    `<div class="item"><div class="n" style="color:var(--texto)">${x.p}%</div><div class="l">${x.l}</div></div>`
+  ).join("");
+
+  document.getElementById("motivoBox").innerHTML = `
+    <b>${c.nombre} — temporada ${c.nivel}</b> (factor ${c.peso.toFixed(2)}× el promedio)<br>
+    ${c.motivo}
+    <div class="motivo-chips">
+      <span class="chip">Utilidad neta/bus: ${fmtM(v.utilidad)}</span>
+      <span class="chip">Ingreso bruto req.: ${fmtM(v.ingreso)}</span>
+      <span class="chip">Combustible: ${v.comb}%</span>
+    </div>`;
+}
+
+function dibujarTabla(meses, acumSerie){
+  const filas = meses.map((m,i)=>{
+    return `<tr><td>${m.mes}</td><td>${m.nivel}</td><td>${fmtM(m.u1)}</td><td>${fmtM(m.u2)}</td><td>${fmtM(m.u1+m.u2)}</td><td>${fmtM(acumSerie[i])}</td><td>${m.deudaRestante>0?fmtM(m.deudaRestante):"Pagado"}</td></tr>`;
+  }).join("");
+  document.getElementById("tablaDetalle").innerHTML = `
+    <thead><tr><th>Mes</th><th>Temporada</th><th>Bus 1</th><th>Bus 2</th><th>Total flota</th><th>Caja acum.</th><th>Deuda bus 2</th></tr></thead>
+    <tbody>${filas}</tbody>`;
+  const anual = meses.slice(0,12).reduce((a,m)=>a+m.u1,0);
+  document.getElementById("notaSupuestos").innerHTML =
+    `<b>Cómo se arma cada mes:</b> la utilidad neta mensual por bus sale directamente del factor de estacionalidad del calendario (peso del mes ÷ suma de pesos × 12 × utilidad promedio). El ingreso bruto nunca se usa para calcular la utilidad — es al revés: se deriva de la utilidad para poder mostrar el donut económico. El conductor siempre se lleva 20% del ingreso bruto. Con los valores actuales, un bus genera <b>${fmtM(anual)}/año</b> en el año 1, repartido según el calendario real de festivos y puentes de 2027.`;
+}
+
+["capital","deuda","cuota","utilidadProm","combAlta","combBaja","otros"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", e=>{ state[id]=Number(e.target.value); actualizarTodo(); });
+});
+function resetDefaults(){
+  state = { capital:180000000, deuda:60000000, cuota:3500000, utilidadProm:7000000, combAlta:24, combBaja:29, otros:8 };
+  Object.keys(state).forEach(id=>{ const el=document.getElementById(id); if(el) el.value = state[id]; });
+  actualizarTodo();
+}
+
+pintarCalendario();
+actualizarTodo();
+</script>
+</body>
+</html>
